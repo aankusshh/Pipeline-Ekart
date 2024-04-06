@@ -47,117 +47,104 @@ After installing these plugins, you may need to configure them according to your
 ## Pipeline 
 
 ```groovy
-
 pipeline {
     agent any
     
     tools {
-        jdk 'jdk17'
         maven 'maven3'
+        jdk 'jdk17'
     }
-
-    enviornment {
-        SCANNER_HOME= tool 'sonar-scanner'
+    
+    environment {
+        SCANNER_HOME = tool 'sonar-scanner'
     }
 
     stages {
         stage('Git Checkout') {
             steps {
-               git branch: 'main', credentialsId: 'git-cred', url: 'https://github.com/jaiswaladi246/Boardgame.git'
+                git branch: 'main', url: 'https://github.com/aankusshh/Ekart.git'
             }
         }
         
-        stage('Compile') {
+        stage('Compile Source Code') {
             steps {
                 sh "mvn compile"
             }
         }
         
-        stage('Test') {
+        stage('Unit Testing') {
             steps {
-                sh "mvn test"
+                sh "mvn test -DskipTests=true"
             }
         }
         
-        stage('File System Scan') {
-            steps {
-                sh "trivy fs --format table -o trivy-fs-report.html ."
-            }
-        }
-        
-        stage('SonarQube Analsyis') {
+        stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar') {
-                    sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=BoardGame -Dsonar.projectKey=BoardGame \
-                            -Dsonar.java.binaries=. '''
+                    sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectKey=EKART -Dsonar.projectName=EKART \
+                    -Dsonar.java.binaries=. ''' 
                 }
             }
         }
         
-        stage('Quality Gate') {
+        stage('Owasp Dependency Check') {
             steps {
-                script {
-                  waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token' 
-                }
+                dependencyCheck additionalArguments: ' --scan ./', odcInstallation: 'DC'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
             }
         }
         
         stage('Build') {
             steps {
-               sh "mvn package"
+                sh "mvn package -DskipTests=true"
             }
         }
         
-        stage('Publish To Nexus') {
+        stage('Deploy to Nexus') {
             steps {
-               withMaven(globalMavenSettingsConfig: 'global-settings', jdk: 'jdk17', maven: 'maven3', mavenSettingsConfig: '', traceability: true) {
-                    sh "mvn deploy"
+                withMaven(globalMavenSettingsConfig: 'global-maven', jdk: 'jdk17', maven: 'maven3', mavenSettingsConfig: '', traceability: true) {
+                    sh "mvn deploy -DskipTests=true"
                 }
             }
         }
         
-        stage('Build & Tag Docker Image') {
+        stage('Build and Tag Docker Image') {
             steps {
-               script {
-                   withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
-                            sh "docker build -t adijaiswal/boardshack:latest ."
+                script {
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                    sh "docker build -t aankusshhh/ekart:latest -f docker/Dockerfile ."
                     }
-               }
+                }
             }
         }
         
-        stage('Docker Image Scan') {
+        stage('Trivy Scan') {
             steps {
-                sh "trivy image --format table -o trivy-image-report.html adijaiswal/boardshack:latest "
+                sh "trivy image aankusshhh/ekart:latest > trivy-report.txt"
             }
         }
         
-        stage('Push Docker Image') {
+        stage('Docker push Image') {
             steps {
-               script {
-                   withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
-                            sh "docker push adijaiswal/boardshack:latest"
+                script {
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                    sh "docker push aankusshhh/ekart:latest"
                     }
-               }
-            }
-        }
-        stage('Deploy To Kubernetes') {
-            steps {
-               withKubeConfig(caCertificate: '', clusterName: 'kubernetes', contextName: '', credentialsId: 'k8-cred', namespace: 'webapps', restrictKubeConfigAccess: false, serverUrl: 'https://172.31.8.146:6443') {
-                        sh "kubectl apply -f deployment-service.yaml"
                 }
             }
         }
         
-        stage('Verify the Deployment') {
+        stage('Kubernetes Deploy') {
             steps {
-               withKubeConfig(caCertificate: '', clusterName: 'kubernetes', contextName: '', credentialsId: 'k8-cred', namespace: 'webapps', restrictKubeConfigAccess: false, serverUrl: 'https://172.31.8.146:6443') {
-                        sh "kubectl get pods -n webapps"
-                        sh "kubectl get svc -n webapps"
+                withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'k8-token', namespace: 'webapps', restrictKubeConfigAccess: false, serverUrl: 'https://172.31.45.235:6443') {
+                    sh "kubectl apply -f deploymentservice.yml -n webapps"
+                    sh "kubectl get svc -n webapps"
                 }
             }
         }
-        
+    }
+}
+ 
         
     }
     post {
