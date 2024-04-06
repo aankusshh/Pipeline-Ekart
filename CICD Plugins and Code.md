@@ -43,6 +43,57 @@
 
 After installing these plugins, you may need to configure them according to your specific environment and requirements. This typically involves setting up credentials, configuring paths, and specifying options in Jenkins global configuration or individual job configurations. Each plugin usually comes with its own set of documentation to guide you through the configuration process.
 
+## Configure Tools
+Jenkins -> Manage Jenkins -> Tools  (Click install automatically on every tool we configure)
+1. JDK installations -> add JDK -> name: jdk -> install automatically (install from adoptium.net) -> select jdk-17.6.9+9
+2. SonarQube Scanner Installation -> name:sonar-scanner -> install automatically
+3. Maven installation -> name:maven3 -> install automatically:3.6.3
+4. Dependency Check Installation -> name:DC -> install automatically (from Github) : 6.5.1
+5. Docker Installaton -> name:docker -> install automatically (from docker.com)
+
+## Connect Tools
+1. SonarQube to Jenkins
+   sonarQube -> administration -> security -> user -> generat token -> copy (Previously we usually use ID and password to connect, but it has grown old, now we use tokens)
+   jenkins -> manage jenkins -> credentials -> global -> add credentials
+   new credential
+   kind: secret text
+   scope: global
+   secret: paste the copied token
+   ID: sonar-token
+   Description: sonar-token
+
+2. Docker to Jenkins
+   jenkins -> manage jenkins -> credentials -> global -> add credentials
+   new credentials
+   kind: username and password
+   scope: globle
+   username: aankusshhh (dockerhub user name)
+   password: ****** (dockerhub password)
+   Id: docker-cred
+   Description: docker-cred
+
+## Configure Servers
+1. SonarQube Configurations 
+   manage jenkins -> system -> sonarQube server -> add sonarqube -> name:sonar -> server URL: <Psste the sonarqube URL here> -> SAt: sonar-token
+
+2. Nexus Configurations
+   jenkins -> manage jenkins -> managed files -> add a new config -> tick on global maven setting -> scrool to ID -> ID: global-maven ->next  -> scroll to content
+   paste the following in server section below this '-->' 
+   <server>
+      <id>maven-releases</id>
+      <username><maven id></username>
+      <password><maven password></password>
+    </server>
+    <server>
+      <id>maven-snapshot</id>
+      <username><maven id></username>
+      <password><maven password></password>
+    </server>
+
+3. Change in pom.xml file
+   Change in the <destribution Managemnet > section -> provide the maven releases and snapshot url's
+    
+
 ### This is the Rough Pipeline
 ![Alt Text](Images/CICD-Written.jpeg)
 
