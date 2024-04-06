@@ -16,3 +16,8 @@ All these stpes are explained in 'CICD Plugins and Code.md' file, fololow the st
 # Phase 3
 After the successfull creation of the pipeline, go to the console output in jenkins it will provide you the port number in which the application is running.
 Copy the ip address of slave 1 and paste it like (eg. 1.1.1.1:31623)
+
+
+# RESULT
+![Alt Text](Images/1.png)
+
