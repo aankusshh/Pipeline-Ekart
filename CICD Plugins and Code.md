@@ -43,7 +43,6 @@
 
 After installing these plugins, you may need to configure them according to your specific environment and requirements. This typically involves setting up credentials, configuring paths, and specifying options in Jenkins global configuration or individual job configurations. Each plugin usually comes with its own set of documentation to guide you through the configuration process.
 
-## Configure Above Plugins in Jenkins as per video
 
 ## Pipeline 
 
