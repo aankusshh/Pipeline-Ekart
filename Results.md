@@ -1,3 +1,3 @@
 # CICD Pipeline Result
 
-![CICD Pipeline](./1.png)
+![CICD Pipeline](/images/1.png)
