@@ -81,6 +81,11 @@ Then, you can run the script using:
 ./install_docker.sh
 ```
 
+Give permission to Docker
+```bash
+sudo chmod 666 /var/run/docker.sock
+```
+
 
 ## installation of Trivy
 
